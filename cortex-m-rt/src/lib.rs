@@ -542,10 +542,41 @@ cfg_global_asm! {
      ldr r1, =__vector_table
      str r1, [r0]",
 
-    // Run user pre-init code which must be executed immediately after startup, before the
-    // potentially time-consuming memory initialisation takes place.
-    // Example use cases include disabling default watchdogs or enabling RAM.
-    "bl __pre_init",
+    // Initialize vector table from flash to RAM
+    "ldr r0, =__vector_table
+     ldr r1, =__evector_table
+     ldr r2, =__sivector_table
+     0:
+     cmp r1, r0
+     beq 1f
+     ldm r2!, {{r3}}
+     stm r0!, {{r3}}
+     b 0b
+     1:",
+
+    // Initialize .text from flash to RAM
+    // "ldr r0, =__stext
+    //  ldr r1, =__etext
+    //  ldr r2, =__sitext
+    //  0:
+    //  cmp r1, r0
+    //  beq 1f
+    //  ldm r2!, {{r3}}
+    //  stm r0!, {{r3}}
+    //  b 0b
+    //  1:",
+
+    // Initialize .rodata from flash to RAM
+    "ldr r0, =__srodata
+     ldr r1, =__erodata
+     ldr r2, =__sirodata
+     0:
+     cmp r1, r0
+     beq 1f
+     ldm r2!, {{r3}}
+     stm r0!, {{r3}}
+     b 0b
+     1:",
 
     // If enabled, initialize RAM with zeros. This is not usually required, but might be necessary
     // to properly initialize checksum-based memory integrity measures on safety-critical hardware.

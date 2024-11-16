@@ -64,9 +64,8 @@ SECTIONS
   PROVIDE(_ram_end = ORIGIN(RAM) + LENGTH(RAM));
   PROVIDE(_stack_start = _ram_end);
 
-  /* ## Sections in FLASH */
   /* ### Vector table */
-  .vector_table ORIGIN(FLASH) :
+  .vector_table ORIGIN(RAM) :
   {
     __vector_table = .;
 
@@ -78,6 +77,7 @@ SECTIONS
     LONG(_stack_start & 0xFFFFFFF8);
 
     /* Reset vector */
+    /* Must point to reset handler in flash because RAM has not been initialized. */
     KEEP(*(.vector_table.reset_vector)); /* this is the `__RESET_VECTOR` symbol */
 
     /* Exceptions */
@@ -87,12 +87,14 @@ SECTIONS
 
     /* Device specific interrupts */
     KEEP(*(.vector_table.interrupts)); /* this is the `__INTERRUPTS` symbol */
-  } > FLASH
+    __evector_table = .;
+  } > RAM AT > FLASH
+  __sivector_table = LOADADDR(.vector_table);
 
   PROVIDE(_stext = ADDR(.vector_table) + SIZEOF(.vector_table));
 
   /* ### .text */
-  .text _stext :
+  .text LOADADDR(.vector_table) + SIZEOF(.vector_table):
   {
     __stext = .;
     *(.Reset);
@@ -107,6 +109,7 @@ SECTIONS
     . = ALIGN(4); /* Pad .text to the alignment to workaround overlapping load section bug in old lld */
     __etext = .;
   } > FLASH
+  __sitext = LOADADDR(.text);
 
   /* ### .rodata */
   .rodata : ALIGN(4)
@@ -120,7 +123,8 @@ SECTIONS
        section will have the correct alignment. */
     . = ALIGN(4);
     __erodata = .;
-  } > FLASH
+  } > RAM AT > FLASH
+  __sirodata = LOADADDR(.rodata);
 
   /* ## Sections in RAM */
   /* ### .data */
@@ -266,9 +270,9 @@ ASSERT(ADDR(.vector_table) + SIZEOF(.vector_table) <= _stext, "
 ERROR(cortex-m-rt): The .text section can't be placed inside the .vector_table section
 Set _stext to an address greater than the end of .vector_table (See output of `nm`)");
 
-ASSERT(_stext > ORIGIN(FLASH) && _stext < ORIGIN(FLASH) + LENGTH(FLASH), "
+/*ASSERT(_stext > ORIGIN(FLASH) && _stext < ORIGIN(FLASH) + LENGTH(FLASH), "
 ERROR(cortex-m-rt): The .text section must be placed inside the FLASH memory.
-Set _stext to an address within the FLASH region.");
+Set _stext to an address within the FLASH region.");*/
 
 /* # Other checks */
 ASSERT(SIZEOF(.got) == 0, "
