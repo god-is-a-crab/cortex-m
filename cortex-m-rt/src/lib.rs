@@ -555,16 +555,16 @@ cfg_global_asm! {
      1:",
 
     // Initialize .text from flash to RAM
-    // "ldr r0, =__stext
-    //  ldr r1, =__etext
-    //  ldr r2, =__sitext
-    //  0:
-    //  cmp r1, r0
-    //  beq 1f
-    //  ldm r2!, {{r3}}
-    //  stm r0!, {{r3}}
-    //  b 0b
-    //  1:",
+    "ldr r0, =__stext
+     ldr r1, =__etext
+     ldr r2, =__sitext
+     0:
+     cmp r1, r0
+     beq 1f
+     ldm r2!, {{r3}}
+     stm r0!, {{r3}}
+     b 0b
+     1:",
 
     // Initialize .rodata from flash to RAM
     "ldr r0, =__srodata

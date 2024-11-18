@@ -78,7 +78,7 @@ SECTIONS
 
     /* Reset vector */
     /* Must point to reset handler in flash because RAM has not been initialized. */
-    KEEP(*(.vector_table.reset_vector)); /* this is the `__RESET_VECTOR` symbol */
+    LONG(LOADADDR(.text) + Reset - ADDR(.text)); /* load address for Reset handler */
 
     /* Exceptions */
     __exceptions = .; /* start of exceptions */
@@ -94,7 +94,7 @@ SECTIONS
   PROVIDE(_stext = ADDR(.vector_table) + SIZEOF(.vector_table));
 
   /* ### .text */
-  .text LOADADDR(.vector_table) + SIZEOF(.vector_table):
+  .text _stext :
   {
     __stext = .;
     *(.Reset);
@@ -108,7 +108,7 @@ SECTIONS
 
     . = ALIGN(4); /* Pad .text to the alignment to workaround overlapping load section bug in old lld */
     __etext = .;
-  } > FLASH
+  } > RAM AT > FLASH
   __sitext = LOADADDR(.text);
 
   /* ### .rodata */
